@@ -1,0 +1,23 @@
+[project]
+name = "find_candidate"
+version = "0.1.0"
+description = "find-candidate using crewAI"
+authors = [{ name = "Your Name", email = "you@example.com" }]
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "crewai[tools]>=0.100.1,<1.0.0"
+]
+
+[project.scripts]
+find_candidate = "find_candidate.main:run"
+run_crew = "find_candidate.main:run"
+train = "find_candidate.main:train"
+replay = "find_candidate.main:replay"
+test = "find_candidate.main:test"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.crewai]
+type = "crew"

@@ -1,0 +1,49 @@
+# research_task:
+#   description: >
+#     Conduct a thorough research about {job_description}
+#     Make sure you find any interesting and relevant information related to {job_description}.
+#   expected_output: >
+#     A list with 10 bullet points of the most relevant information about {job_description}
+#   agent: researcher
+
+ExtractCVDetails:
+  description: >
+    Extract and summarize details from each CV PDF file stored in the given folder.
+    Key details include Name, Contact Information, Skills, Work Experience, Education, and Certifications.
+  expected_output: >
+    - Structured CV details, including:
+      - Full Name
+      - Contact Information
+      - Skills
+      - Work Experience
+      - Education
+      - Certifications
+      - Relevant Keywords
+    - Summarized profile for easy comparison.
+  agent: CVExtractionAgent
+
+StoreCVDetails:
+  description: >
+    Store the extracted CV details in a structured knowledge base for comparison.
+  expected_output: >
+    - CV data saved in a structured format for quick retrieval.
+    - Organized candidate profiles stored in a knowledge base.
+  agent: CVExtractionAgent
+
+CompareCVWithJobDescription:
+  description: >
+    Compare the extracted CV details with {job_description} and rank candidates based on relevance.
+  expected_output: >
+    - A ranked list of candidates based on their match percentage with {job_description}.
+    - Justification for ranking based on required skills, experience, and qualifications.
+    - Identification of top candidates with key strengths highlighted.
+  agent: CVMatchingAgent
+
+GenerateFinalReport:
+  description: >
+    Generate a final report summarizing the best-matched CVs along with their strengths and weaknesses.
+  expected_output: >
+    - A structured summary of the most suitable candidates.
+    - Highlighted strengths, weaknesses, and suitability scores.
+    - A final recommendation of the best candidates.
+  agent: CVMatchingAgent
