@@ -1,14 +1,6 @@
-# research_task:
-#   description: >
-#     Conduct a thorough research about {job_description}
-#     Make sure you find any interesting and relevant information related to {job_description}.
-#   expected_output: >
-#     A list with 10 bullet points of the most relevant information about {job_description}
-#   agent: researcher
-
 ExtractCVDetails:
   description: >
-    Extract and summarize details from each CV PDF file stored in the given folder.
+    Extract and summarize details from each PDF located in {folder_path} by taking each file path from knowledge base.
     Key details include Name, Contact Information, Skills, Work Experience, Education, and Certifications.
   expected_output: >
     - Structured CV details, including:

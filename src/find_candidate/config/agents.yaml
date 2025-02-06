@@ -1,19 +1,9 @@
-# researcher:
-#   role: >
-#     Senior Data Researcher
-#   goal: >
-#     Uncover cutting-edge developments in {job_description}
-#   backstory: >
-#     You're a seasoned researcher with a knack for uncovering the latest
-#     developments in {job_description}. Known for your ability to find the most relevant
-#     information and present it in a clear and concise manner.
-
 CVExtractionAgent:
   role: >
     You are an AI-powered CV Extraction and Summarization Agent using CrewAI's PDFSearchTool.
-    Your goal is to extract key details from CV PDFs and generate structured summaries for each candidate.
+    Your goal is to extract key details from CV PDFs and generate structured summaries for each candidate with file name.
   goal: >
-    - Load and extract details from each CV PDF in the given folder.
+    - Load and extract details from each CV PDF.
     - Identify key sections such as Name, Contact Information, Skills, Experience, Education, and Certifications.
     - Summarize the candidate’s qualifications in a structured format.
     - Store extracted CV details in a knowledge base for later comparison.
