@@ -11,8 +11,8 @@ from typing import List
 class FindCandidate:
     """FindCandidate crew for processing multiple CVs"""
     
-    def __init__(self):
-        self.cv_folder = "./CV"
+    def __init__(self, folder_path):
+        self.folder_path = folder_path
         self.agents_config = 'config/agents.yaml'
         self.tasks_config = 'config/tasks.yaml'
         
@@ -50,13 +50,13 @@ class FindCandidate:
 
     def get_cv_files(self) -> List[dict]:
         """Get CV files information"""
-        if not os.path.exists(self.cv_folder):
-            raise ValueError(f"CV folder not found: {self.cv_folder}")
+        if not os.path.exists(self.folder_path):
+            raise ValueError(f"CV folder not found: {self.folder_path}")
             
         cv_files = []
-        for f in os.listdir(self.cv_folder):
+        for f in os.listdir(self.folder_path):
             if f.endswith(".pdf"):
-                full_path = os.path.abspath(os.path.join(self.cv_folder, f))
+                full_path = os.path.abspath(os.path.join(self.folder_path, f))
                 print(f"Checking file: {full_path}")  # Debugging line
                 if os.path.exists(full_path):
                     file_id = uuid.uuid4().hex[:8]
@@ -70,7 +70,7 @@ class FindCandidate:
                     print(f"Warning: File not accessible: {full_path}")
         
         if not cv_files:
-            raise ValueError(f"No PDF files found in {self.cv_folder}")
+            raise ValueError(f"No PDF files found in {self.folder_path}")
             
         return cv_files
 
