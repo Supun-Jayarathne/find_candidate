@@ -35,7 +35,7 @@ iface = gr.Interface(
     ],
     outputs="text",
     title="CrewAI CV Analyzer",
-    description="Upload a CV to extract project details from the CV and write a blog post about the technologies.",
+    description="Find the top candidates from given CV list.",
     css="footer{display:none !important}",
     flagging_options=[],
 )
