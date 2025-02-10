@@ -10,7 +10,7 @@ warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
 inputs = {
     "job_description": "A frontend developer is responsible for designing and developing the user interface (UI) of websites and web applications, using technologies like HTML, CSS, and JavaScript, to create the visual elements and interactive features that users see and interact with on a website or app; they collaborate with designers, backend developers, and product managers to bring a website's front-end vision to life.",
-    "folder_path": "./CV",
+    "folder_path": "../CV",
 }
 
 def run():
