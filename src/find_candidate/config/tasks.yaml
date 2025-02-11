@@ -35,7 +35,29 @@ GenerateFinalReport:
   description: >
     Generate a final report summarizing the best-matched CVs along with their strengths and weaknesses.
   expected_output: >
-    - A structured summary of the most suitable candidates.
+    - A structured summary of the most suitable candidates with name.
     - Highlighted strengths, weaknesses, and suitability scores.
     - A final recommendation of the best candidates.
   agent: CVMatchingAgent
+
+SOPValidationTask:
+  description: >
+    "Validate the CV processing workflow against the Standard Operating Procedure (SOP) to ensure compliance with required verification steps, data integrity, and expected output format."
+  input_parameters: >
+    - "cv_files: List of processed CVs"
+    - "extracted_data: Structured data extracted from CVs"
+    - "job_description: Job requirements and qualifications"
+    - "matching_results: Ranked candidates based on criteria"
+  expected_output: >
+    - Validation status: Pass/Fail based on SOP compliance.
+    - List of missing or incorrectly processed steps:
+      - Verification of the candidate's educational background and certifications.
+      - Background check and reference check as per SOP.
+      - Detailed analysis of past work experience and relevance to the role.
+    - Recommendations for improving adherence to SOP:
+      - Implement verification of educational background and certifications.
+      - Include background and reference checks in the CV processing flow.
+      - Enhance analysis of past work experience by reviewing projects, roles, and responsibilities.
+    - Log of validation checks performed and compliance summary.
+  priority: High
+  agent: SOPValidationAgent

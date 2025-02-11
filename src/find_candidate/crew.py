@@ -6,6 +6,9 @@ from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import DirectoryReadTool, PDFSearchTool
 from crewai.llm import LLM
 from typing import List
+# import openlit
+from agentops import track_agent
+import agentops
 
 @CrewBase
 class FindCandidate:
@@ -15,6 +18,9 @@ class FindCandidate:
         self.folder_path = folder_path
         self.agents_config = 'config/agents.yaml'
         self.tasks_config = 'config/tasks.yaml'
+
+        # openlit.init(disable_metrics=True)
+        agentops.init()
         
         # Initialize unified knowledge base with unique collection name
         collection_name = f"candidate_matching_{uuid.uuid4().hex[:8]}"
@@ -30,6 +36,7 @@ class FindCandidate:
         self.directory_tool = DirectoryReadTool()
         self.pdf_tool = PDFSearchTool()
 
+    @track_agent(name='CVExtractionAgent')
     @agent
     def CVExtractionAgent(self) -> Agent:
         return Agent(
@@ -40,11 +47,23 @@ class FindCandidate:
             llm=LLM(model="gpt-4", api_key=os.environ.get("OPENAI_API_KEY"), temperature=0)
         )
 
+    @track_agent(name='CVMatchingAgent')
     @agent
     def CVMatchingAgent(self) -> Agent:
         return Agent(
             config=self.agents_config["CVMatchingAgent"],
             knowledge=self.knowledge_base,
+            verbose=True,
+            llm=LLM(model="gpt-4", api_key=os.environ.get("OPENAI_API_KEY"), temperature=0)
+        )
+    
+    @track_agent(name='SOPValidationAgent')
+    @agent
+    def SOPValidationAgent(self) -> Agent:
+        """Agent for validating extracted CV details and matching results"""
+        return Agent(
+            config=self.agents_config["SOPValidationAgent"],
+            knowledge=self.knowledge_base,  # Access knowledge base for validation
             verbose=True,
             llm=LLM(model="gpt-4", api_key=os.environ.get("OPENAI_API_KEY"), temperature=0)
         )
@@ -172,6 +191,26 @@ class FindCandidate:
             output_file="matching_report.md",
             agent=self.CVMatchingAgent()
         )
+    
+    def create_validation_task(self) -> Task:
+        """Create a task to validate extracted CVs and matching results based on SOPs"""
+        return Task(
+            config=self.tasks_config["SOPValidationTask"],
+            input_data={
+                "instructions": """
+                Validate the extracted CV information and matching results against standard operating procedures (SOP).
+                
+                Key validation steps:
+                1. Ensure all necessary fields are extracted (Skills, Experience, Education, etc.).
+                2. Validate data consistency (e.g., work experience years should align).
+                3. Verify the correctness of the matching process (e.g., do skill matches align with job requirements?).
+                4. Identify any missing or incorrect data entries.
+                
+                If any issues are found, flag them for review.
+                """
+            },
+            agent=self.SOPValidationAgent()
+        )
 
     @crew
     def crew(self, job_description: str) -> Crew:
@@ -179,12 +218,13 @@ class FindCandidate:
         try:
             extraction_tasks = self.create_extraction_tasks()
             compare_task = self.create_matching_task(job_description)
+            validation_task = self.create_validation_task()
             report_task = self.create_report_task()
             
-            all_tasks = extraction_tasks + [compare_task, report_task]
+            all_tasks = extraction_tasks + [compare_task, validation_task, report_task]
             
             return Crew(
-                agents=[self.CVExtractionAgent(), self.CVMatchingAgent()],
+                agents=[self.CVExtractionAgent(), self.CVMatchingAgent(), self.SOPValidationAgent()],
                 tasks=all_tasks,
                 process=Process.sequential,
                 verbose=True
