@@ -33,7 +33,7 @@ class FindCandidate:
             }
         )
         
-        self.directory_tool = DirectoryReadTool()
+        self.directory_tool = DirectoryReadTool(directory=self.folder_path)
         self.pdf_tool = PDFSearchTool()
 
     @track_agent(name='CVExtractionAgent')
@@ -46,6 +46,18 @@ class FindCandidate:
             verbose=True,
             llm=LLM(model="gpt-4", api_key=os.environ.get("OPENAI_API_KEY"), temperature=0)
         )
+    
+    @track_agent(name='CVEvaluationAgent')
+    @agent
+    def CVEvaluationAgent(self) -> Agent:
+        """Agent for evaluating skill proficiency from CVs"""
+        return Agent(
+            config=self.agents_config["CVEvaluationAgent"],
+            knowledge=self.knowledge_base,
+            verbose=True,
+            llm=LLM(model="gpt-4", api_key=os.environ.get("OPENAI_API_KEY"), temperature=0)
+        )
+
 
     @track_agent(name='CVMatchingAgent')
     @agent
@@ -64,6 +76,28 @@ class FindCandidate:
         return Agent(
             config=self.agents_config["SOPValidationAgent"],
             knowledge=self.knowledge_base,  # Access knowledge base for validation
+            verbose=True,
+            llm=LLM(model="gpt-4", api_key=os.environ.get("OPENAI_API_KEY"), temperature=0)
+        )
+    
+    @track_agent(name='RankingAgent')
+    @agent
+    def RankingAgent(self) -> Agent:
+        """Agent responsible for ranking candidates"""
+        return Agent(
+            config=self.agents_config["RankingAgent"],
+            knowledge=self.knowledge_base,
+            verbose=True,
+            llm=LLM(model="gpt-4", api_key=os.environ.get("OPENAI_API_KEY"), temperature=0)
+        )
+    
+    @track_agent(name='ReportGenerationAgent')
+    @agent
+    def ReportGenerationAgent(self) -> Agent:
+        """Agent responsible for generating the final candidate report"""
+        return Agent(
+            config=self.agents_config["ReportGenerationAgent"],
+            knowledge=self.knowledge_base,
             verbose=True,
             llm=LLM(model="gpt-4", api_key=os.environ.get("OPENAI_API_KEY"), temperature=0)
         )
@@ -99,6 +133,8 @@ class FindCandidate:
         cv_files = self.get_cv_files()
         
         for cv_file in cv_files:
+            # extracted_data = self.pdf_tool.run({"query": "technical skills programming languages", "pdf": cv_file['path']})
+            # print(f"Extracted Data for {cv_file['filename']}: {extracted_data}")  # Debugging log
             task = Task(
                 config=self.tasks_config["ExtractCVDetails"],
                 input_data={
@@ -125,13 +161,32 @@ class FindCandidate:
                 agent=self.CVExtractionAgent()
             )
             tasks.append(task)
-        
+        print(f"Created {len(tasks)} extraction tasks")
         return tasks
+    
+    def create_evaluation_task(self) -> Task:
+        """Create a task to evaluate candidates' skills based on CV information"""
+        return Task(
+            config=self.tasks_config["EvaluateSkillProficiency"],
+            input_data={
+                "instructions": """
+                Evaluate the technical skills of candidates based on extracted CV data.
+
+                - Cross-check listed skills with experience and projects.
+                - Assign a proficiency level: Beginner, Intermediate, or Expert.
+                - Justify each assessment with relevant evidence from CV data.
+                """
+            },
+            agent=self.CVEvaluationAgent()
+        )
+
 
     def create_matching_task(self, job_description: str) -> Task:
         """Create task for comparing CVs with job description"""
         job_id = f"job_{uuid.uuid4().hex[:8]}"
-        
+        # print("Current Knowledge Base Entries:")
+        # print(self.knowledge_base.list_entries())  # Check stored data
+
         # Instead of add_entry, use the appropriate CrewAI Knowledge methods
         return Task(
             config=self.tasks_config["CompareCVWithJobDescription"],
@@ -168,29 +223,29 @@ class FindCandidate:
             agent=self.CVMatchingAgent()
         )
 
-    def create_report_task(self) -> Task:
-        """Create task for generating final report"""
-        return Task(
-            config=self.tasks_config["GenerateFinalReport"],
-            input_data={
-                "instructions": """
-                Generate detailed matching report:
-                1. Top 3 candidates with match percentages
-                2. Specific matching strengths for each
-                3. Any skill gaps or areas of concern
-                4. Recommendations for interviews
-                5. Summary of why each candidate matches
+    # def create_report_task(self) -> Task:
+    #     """Create task for generating final report"""
+    #     return Task(
+    #         config=self.tasks_config["GenerateFinalReport"],
+    #         input_data={
+    #             "instructions": """
+    #             Generate detailed matching report:
+    #             1. Top 3 candidates with match percentages
+    #             2. Specific matching strengths for each
+    #             3. Any skill gaps or areas of concern
+    #             4. Recommendations for interviews
+    #             5. Summary of why each candidate matches
                 
-                Format as markdown with sections:
-                - Executive Summary
-                - Candidate Rankings
-                - Detailed Analysis
-                - Recommendations
-                """
-            },
-            output_file="matching_report.md",
-            agent=self.CVMatchingAgent()
-        )
+    #             Format as markdown with sections:
+    #             - Executive Summary
+    #             - Candidate Rankings
+    #             - Detailed Analysis
+    #             - Recommendations
+    #             """
+    #         },
+    #         output_file="matching_report.md",
+    #         agent=self.CVMatchingAgent()
+    #     )
     
     def create_validation_task(self) -> Task:
         """Create a task to validate extracted CVs and matching results based on SOPs"""
@@ -201,16 +256,63 @@ class FindCandidate:
                 Validate the extracted CV information and matching results against standard operating procedures (SOP).
                 
                 Key validation steps:
-                1. Ensure all necessary fields are extracted (Skills, Experience, Education, etc.).
+                1. Ensure all necessary fields are extracted (Skills, Experience, Education, etc.) if it's available.
                 2. Validate data consistency (e.g., work experience years should align).
                 3. Verify the correctness of the matching process (e.g., do skill matches align with job requirements?).
                 4. Identify any missing or incorrect data entries.
-                
-                If any issues are found, flag them for review.
+                5. Continue to next step to generate the final report.
                 """
             },
             agent=self.SOPValidationAgent()
         )
+    
+    def create_ranking_task(self) -> Task:
+        """Create a task to rank candidates based on evaluation results"""
+        return Task(
+            config=self.tasks_config["RankCandidatesTask"],
+            input_data={
+                "instructions": """
+                Rank candidates based on CVMatchingAgent and SOPValidationAgent results.
+
+                Consider:
+                - Skills match (40%)
+                - Experience relevance (30%)
+                - Education fit (20%)
+                - Overall profile and completeness (10%)
+
+                Provide a ranked list including:
+                - Candidate Name
+                - Overall Match Percentage
+                - Key Strengths and Weaknesses
+                - Any Skill Gaps Identified
+                - Final Rank (1 to N)
+                """
+            },
+            agent=self.RankingAgent()
+        )
+
+    def create_final_report_task(self) -> Task:
+        """Create a task to generate the final candidate report"""
+        return Task(
+            config=self.tasks_config["GenerateFinalReportTask"],
+            input_data={
+                "instructions": """
+                Generate a structured report summarizing the top 5 ranked candidates.
+
+                Include:
+                - **Executive Summary**
+                - **Top 5 Ranked Candidates**
+                - **Detailed Candidate Analysis**
+                - **Strengths and Weaknesses**
+                - **Final Hiring Recommendations**
+
+                Format the report as markdown and save as `final_candidates_report.md`.
+                """
+            },
+            output_file="final_candidates_report.md",
+            agent=self.ReportGenerationAgent()
+        )
+
 
     @crew
     def crew(self, job_description: str) -> Crew:
@@ -218,13 +320,25 @@ class FindCandidate:
         try:
             extraction_tasks = self.create_extraction_tasks()
             compare_task = self.create_matching_task(job_description)
+            evaluation_task = self.create_evaluation_task()
             validation_task = self.create_validation_task()
-            report_task = self.create_report_task()
+            ranking_task = self.create_ranking_task()
+            report_task = self.create_final_report_task()
             
-            all_tasks = extraction_tasks + [compare_task, validation_task, report_task]
+            all_tasks = extraction_tasks + [compare_task, evaluation_task, validation_task, ranking_task, report_task]
+            # all_tasks = extraction_tasks + [evaluation_task, compare_task, validation_task, report_task]
+            # all_tasks = extraction_tasks + [compare_task, report_task]
             
             return Crew(
-                agents=[self.CVExtractionAgent(), self.CVMatchingAgent(), self.SOPValidationAgent()],
+            agents=[
+                self.CVExtractionAgent(),
+                self.CVMatchingAgent(),
+                self.SOPValidationAgent(),
+                self.CVEvaluationAgent(),
+                self.RankingAgent(),
+                self.ReportGenerationAgent()
+            ],
+                # agents=[self.CVExtractionAgent(), self.CVMatchingAgent()],
                 tasks=all_tasks,
                 process=Process.sequential,
                 verbose=True

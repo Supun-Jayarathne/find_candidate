@@ -22,6 +22,23 @@ StoreCVDetails:
     - Organized candidate profiles stored in a knowledge base.
   agent: CVExtractionAgent
 
+EvaluateSkillProficiency:
+  description: >
+    Review the extracted skills and technologies from each CV.
+    Determine the expertise level of the candidate for each technology based on their experience, projects, and certifications.
+
+    Skill Levels:
+    - Beginner: Mentioned but lacks relevant experience.
+    - Intermediate: Has relevant experience but lacks advanced projects.
+    - Expert: Demonstrates deep knowledge, certifications, and extensive project experience.
+
+  expected_output: >
+    A structured list of skill evaluations per candidate, formatted as:
+    - Candidate Name: [Name]
+    - Skill: [Skill Name], Proficiency Level: [Beginner/Intermediate/Expert]
+    - Supporting Evidence: [Extracted details justifying the evaluation]
+  agent: CVEvaluationAgent
+
 CompareCVWithJobDescription:
   description: >
     Compare the extracted CV details with {job_description} and rank candidates based on relevance.
@@ -29,15 +46,6 @@ CompareCVWithJobDescription:
     - A ranked list of candidates based on their match percentage with {job_description}.
     - Justification for ranking based on required skills, experience, and qualifications.
     - Identification of top candidates with key strengths highlighted.
-  agent: CVMatchingAgent
-
-GenerateFinalReport:
-  description: >
-    Generate a final report summarizing the best-matched CVs along with their strengths and weaknesses.
-  expected_output: >
-    - A structured summary of the most suitable candidates with name.
-    - Highlighted strengths, weaknesses, and suitability scores.
-    - A final recommendation of the best candidates.
   agent: CVMatchingAgent
 
 SOPValidationTask:
@@ -61,3 +69,49 @@ SOPValidationTask:
     - Log of validation checks performed and compliance summary.
   priority: High
   agent: SOPValidationAgent
+
+RankCandidatesTask:
+  description: >
+    Rank candidates based on their CVMatchingAgent and SOPValidationAgent results.
+    Consider job fit, skill match, experience, and overall validation feedback.
+
+    Ranking Criteria:
+    - Skills match (40%)
+    - Experience relevance (30%)
+    - Education fit (20%)
+    - Overall profile and completeness (10%)
+
+  expected_output: >
+    A ranked list of candidates with:
+    - Candidate Name
+    - Overall Match Percentage
+    - Strengths and Weaknesses Summary
+    - Any Skill Gaps Identified
+    - Rank Position (1 to N)
+
+GenerateFinalReportTask:
+  description: >
+    Compile a well-structured report summarizing the top 5 candidates based on rankings.
+
+    Your report should include:
+    - Top 5 ranked candidates with match percentages.
+    - Key strengths and standout qualities for each candidate.
+    - Any skill gaps or concerns that need attention.
+    - Final recommendations for hiring decisions.
+
+  expected_output: >
+    A structured markdown report containing:
+    - **Executive Summary**
+    - **Candidate Rankings (Top 5)**
+    - **Detailed Analysis for Each Candidate**
+    - **Strengths and Weaknesses**
+    - **Final Recommendations**
+
+# GenerateFinalReport:
+#   description: >
+#     Generate a final report summarizing the best-matched CVs along with their strengths and weaknesses.
+#   expected_output: >
+#     - A structured summary of the most suitable candidates with name.
+#     - Highlighted strengths, weaknesses, and suitability scores.
+#     - A final recommendation of the best candidates.
+#   agent: CVMatchingAgent
