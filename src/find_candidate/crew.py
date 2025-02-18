@@ -62,6 +62,7 @@ class FindCandidate:
             pdf_tool.run(query={"description": "job title"}, pdf={"description": "/path/to/resume.pdf"})
             
             Always pass simple string values, never dictionaries or complex objects.
+            Store information about accepted CVs in the Knowledge Base.
             """,
             llm=LLM(model="gpt-4o-mini", api_key=os.environ.get("OPENAI_API_KEY"), temperature=0)
         )
@@ -145,23 +146,23 @@ class FindCandidate:
                 Scan all CVs in the folder `{folder_path}` and filter candidates based on their expected job title.
 
                 Steps:
-                1. Read each CV file in `{folder_path}`.
-                2. For each CV file, use the PDFSearchTool with a specific query like:
-                "job title", "position", "role".
-                3. Compare the extracted job titles with the provided job description:
+                1. Read each CV file in `{folder_path}` using the DirectoryReadTool.
+                2. For PDF files, use the PDF search tool as follows:
+                ```
+                result = self.pdf_tool.run(query="job title OR position OR role", pdf="/full/path/to/cv.pdf")
+                ```
+                3. Compare extracted job titles with the provided job description:
                 "{job_description}"
-                4. Select only CVs that match the job description.
+                4. Select only CVs that match the job description criteria.
                 5. Output a structured list of valid CVs.
 
-                When using the PDFSearchTool, make sure to provide two separate parameters:
-                - query: A string containing your search query
-                - pdf: A string containing the path to the PDF file
-
                 Output Format:
-                - Candidate Name
-                - Expected Job Title
-                - CV File Path
-                - Filtering Status: Accepted / Rejected
+                ```
+                Filtered CVs:
+                1. Candidate: [Name], Job Title: [Title], Path: [Full path], Status: Accepted
+                2. Candidate: [Name], Job Title: [Title], Path: [Full path], Status: Accepted
+                ...
+                ```
                 """
             },
             agent=self.CVFilteringAgent()
@@ -477,45 +478,38 @@ class FindCandidate:
             )
 
             filtering_results = filtering_crew.kickoff(inputs={'job_description': job_description})
+            print("Filtering results:", filtering_results)
 
-            # Extract the actual response from CrewOutput
-            filtered_cvs = []
+            # Process filtering results
             if isinstance(filtering_results, CrewOutput):
-                print("Processing CrewOutput...")
-                
-                # Get string representation
                 filtering_results_str = str(filtering_results)
-                
-                # Try to extract parsed results directly
-                if hasattr(filtering_results, 'result') and filtering_results.result:
-                    if isinstance(filtering_results.result, list):
-                        filtered_cvs = filtering_results.result
-                    else:
-                        filtered_cvs = self.parse_filtering_results(str(filtering_results.result))
-                elif hasattr(filtering_results, 'output') and filtering_results.output:
-                    if isinstance(filtering_results.output, list):
-                        filtered_cvs = filtering_results.output
-                    else:
-                        filtered_cvs = self.parse_filtering_results(str(filtering_results.output))
-                else:
-                    # Fallback to parsing string representation
-                    filtered_cvs = self.parse_filtering_results(filtering_results_str)
+                filtered_cvs = self.parse_filtering_results(filtering_results_str)
             else:
-                # If it's already a string or list
-                if isinstance(filtering_results, list):
-                    filtered_cvs = filtering_results
+                filtered_cvs = self.parse_filtering_results(str(filtering_results))
+
+            # Handle case where no CVs are found
+            if not filtered_cvs:
+                print("No matching CVs found. Checking if any files exist in the directory...")
+                
+                # Fallback: Get all PDF files from the directory if filtering found none
+                all_files = []
+                try:
+                    import glob
+                    pdf_files = glob.glob(os.path.join(self.folder_path, "*.pdf"))
+                    all_files.extend([(f"candidate_{i+1}", path) for i, path in enumerate(pdf_files)])
+                    
+                    # Also try other common CV formats
+                    docx_files = glob.glob(os.path.join(self.folder_path, "*.docx"))
+                    all_files.extend([(f"candidate_{i+len(pdf_files)+1}", path) for i, path in enumerate(docx_files)])
+                except Exception as e:
+                    print(f"Error listing directory: {str(e)}")
+                
+                if all_files:
+                    print(f"Found {len(all_files)} files in directory. Using these as fallback.")
+                    filtered_cvs = all_files
                 else:
-                    filtered_cvs = self.parse_filtering_results(str(filtering_results))
-            
-            # Safety check - ensure we have a list
-            if not isinstance(filtered_cvs, list):
-                print(f"Warning: filtered_cvs is not a list. Got {type(filtered_cvs)}. Converting...")
-                if filtered_cvs:
-                    filtered_cvs = [filtered_cvs]
-                else:
-                    filtered_cvs = []
-            
-            # Print for debugging
+                    print("No files found in directory. Process will continue with empty CV list.")
+
             print(f"Found {len(filtered_cvs)} filtered CVs to process")
             
             # Step 3: Create extraction tasks only for valid CVs
@@ -548,11 +542,9 @@ class FindCandidate:
 
         except Exception as e:
             print(f"Error creating crew: {str(e)}")
+            import traceback
+            traceback.print_exc()
             raise
-
-
-
-
 
 
     # @crew

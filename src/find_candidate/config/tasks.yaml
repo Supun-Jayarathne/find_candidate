@@ -7,6 +7,7 @@ FilterCVsByJobTitle:
     - Extract the candidate's expected job title or career objective.
     - Compare it with the provided job description.
     - Select only CVs that match the job description.
+    - Store selected CVs with given output format in a knowledge base.
 
   expected_output: >
     A list of filtered CVs that match the job description.
