@@ -1,6 +1,25 @@
+FilterCVsByJobTitle:
+  description: >
+    Scan all CVs in the provided folder and filter candidates based on their expected job title.
+
+    Steps:
+    - Read each CV from the specified folder.
+    - Extract the candidate's expected job title or career objective.
+    - Compare it with the provided job description.
+    - Select only CVs that match the job description.
+
+  expected_output: >
+    A list of filtered CVs that match the job description.
+    Output Format:
+    - Candidate Name
+    - Expected Job Title
+    - CV File Path
+    - Filtering Status: Accepted / Rejected
+  agent: CVFilteringAgent
+
 ExtractCVDetails:
   description: >
-    Extract and summarize details from each PDF located in {folder_path} by taking each file path from knowledge base.
+    Extract and summarize details from each selected PDF by taking each file path from knowledge base.
     Key details include Name, Contact Information, Skills, Work Experience, Education, and Certifications.
   expected_output: >
     - Structured CV details, including:
@@ -50,44 +69,37 @@ CompareCVWithJobDescription:
 
 SOPValidationTask:
   description: >
-    "Validate the CV processing workflow against the Standard Operating Procedure (SOP) to ensure compliance with required verification steps, data integrity, and expected output format."
-  input_parameters: >
-    - "cv_files: List of processed CVs"
-    - "extracted_data: Structured data extracted from CVs"
-    - "job_description: Job requirements and qualifications"
-    - "matching_results: Ranked candidates based on criteria"
+    Validate the extracted CV information and flag any missing details.
+
+    Steps:
+    - Check if all required sections are present: Skills, Experience, Education, Certifications.
+    - If a section is missing, flag it but do not exclude the CV.
+    - Continue processing even if some details are missing.
+    - Ensure a flag is added to incomplete CVs for ranking adjustment.
+
   expected_output: >
-    - Validation status: Pass/Fail based on SOP compliance.
-    - List of missing or incorrectly processed steps:
-      - Verification of the candidate's educational background and certifications.
-      - Background check and reference check as per SOP.
-      - Detailed analysis of past work experience and relevance to the role.
-    - Recommendations for improving adherence to SOP:
-      - Implement verification of educational background and certifications.
-      - Include background and reference checks in the CV processing flow.
-      - Enhance analysis of past work experience by reviewing projects, roles, and responsibilities.
-    - Log of validation checks performed and compliance summary.
-  priority: High
+    A validation report for each CV with:
+    - **Validation Status: Pass / Needs Review**
+    - **Missing Fields** (if any)
+    - **Decision**: Include in ranking with adjusted score.
   agent: SOPValidationAgent
 
 RankCandidatesTask:
   description: >
-    Rank candidates based on their CVMatchingAgent and SOPValidationAgent results.
-    Consider job fit, skill match, experience, and overall validation feedback.
+    Rank candidates based on available information, even if some details are missing.
 
-    Ranking Criteria:
-    - Skills match (40%)
-    - Experience relevance (30%)
-    - Education fit (20%)
-    - Overall profile and completeness (10%)
+    Steps:
+    - Use scores from CVMatchingAgent and SOPValidationAgent.
+    - If key details are missing, adjust ranking score but do not exclude the CV.
+    - Ensure rankings reflect the best available data.
 
   expected_output: >
     A ranked list of candidates with:
     - Candidate Name
-    - Overall Match Percentage
+    - Overall Match Percentage (adjusted if missing fields)
+    - Missing Fields (if any)
     - Strengths and Weaknesses Summary
-    - Any Skill Gaps Identified
-    - Rank Position (1 to N)
+  agent: RankingAgent
 
 GenerateFinalReportTask:
   description: >
