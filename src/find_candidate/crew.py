@@ -4,7 +4,7 @@ import uuid
 from crewai import Agent, Crew, Process, Task, Knowledge
 from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import DirectoryReadTool, PDFSearchTool
-from crewai.crews.crew_output import CrewOutput
+from crewai.crews.crew_output import CrewOutput, TaskOutput
 from langchain_docling import DoclingLoader
 from crewai.llm import LLM
 from typing import List
@@ -249,63 +249,6 @@ class FindCandidate:
         print(f"Successfully created {len(tasks)} extraction tasks")
         return tasks
 
-
-    # def create_extraction_tasks(self, filtered_cvs: List) -> List[Task]:
-    #     """Create extraction tasks for only filtered CVs"""
-    #     tasks = []
-
-    #     for cv in filtered_cvs:
-    #         # Ensure `cv` is in the correct format
-    #         if isinstance(cv, list) and len(cv) == 2:  
-    #             cv_id, cv_path = cv  # Unpack if it's a list of two elements
-    #         elif isinstance(cv, tuple) and len(cv) == 2:
-    #             cv_id, cv_path = cv  # Unpack if it's a tuple
-    #         elif isinstance(cv, dict):
-    #             cv_id = cv.get('id', 'unknown_id')
-    #             cv_path = cv.get('path')
-    #         else:
-    #             print(f"Skipping invalid CV format: {cv}")
-    #             continue
-
-    #         # Ensure `cv_path` is a string, not a list
-    #         if isinstance(cv_path, list):
-    #             cv_path = cv_path[0] if cv_path else None  # Take the first element if it's a list
-
-    #         # Check if cv_path is valid
-    #         if not isinstance(cv_path, str) or not cv_path:
-    #             print(f"Warning: Invalid file path for CV ID {cv_id}. Skipping...")
-    #             continue
-
-    #         filename = os.path.basename(cv_path)
-
-    #         # Now use correct variables
-    #         task = Task(
-    #             config=self.tasks_config["ExtractCVDetails"],
-    #             input_data={
-    #                 "cv_id": cv_id,
-    #                 "cv_path": cv_path,
-    #                 "instructions": f"""
-    #                 Extract detailed information from the selected CV: {filename}
-
-    #                 Use **PDFSearchTool** to parse and extract:
-    #                 - Skills and Technologies
-    #                 - Work Experience
-    #                 - Education and Certifications
-    #                 - Projects and Achievements
-                    
-    #                 Store extracted data in the Knowledge Base with CV ID: {cv_id}
-    #                 """
-    #             },
-    #             agent=self.CVExtractionAgent()
-    #         )
-    #         tasks.append(task)
-
-    #     print(f"Created {len(tasks)} extraction tasks for filtered CVs")
-    #     return tasks
-
-
-
-    
     def create_evaluation_task(self) -> Task:
         """Create a task to evaluate candidates' skills based on CV information"""
         return Task(
@@ -435,31 +378,38 @@ class FindCandidate:
             agent=self.ReportGenerationAgent()
         )
     
-    def parse_filtering_results(self, results_text: str) -> List[tuple]:
-        """Parses text output from filtering agent and converts it to structured data."""
+    def get_all_cv_files(self) -> List[tuple]:
+        """Retrieve all CV files (PDF, DOCX, TXT) if no filtered CVs are found."""
+        all_files = []
+        try:
+            import glob
+            pdf_files = glob.glob(os.path.join(self.folder_path, "*.pdf"))
+            docx_files = glob.glob(os.path.join(self.folder_path, "*.docx"))
+            txt_files = glob.glob(os.path.join(self.folder_path, "*.txt"))
+
+            all_files.extend([(f"cv_{i+1}", path) for i, path in enumerate(pdf_files)])
+            all_files.extend([(f"cv_{i+len(pdf_files)+1}", path) for i, path in enumerate(docx_files)])
+            all_files.extend([(f"cv_{i+len(pdf_files)+len(docx_files)+1}", path) for i, path in enumerate(txt_files)])
+
+        except Exception as e:
+            print(f"Error listing directory: {str(e)}")
+
+        return all_files
+
+    
+    def parse_filtering_results(self, raw_text: str) -> List[tuple]:
+        """Parses raw text output from filtering agent into structured data."""
         valid_cvs = []
-        
-        # Look for sections in the text that might be formatted in different ways
-        # 1. Check for list of CVs in standard format
-        for line in results_text.split("\n"):
-            if "Accepted" in line and "|" in line:  
-                try:
-                    parts = line.split("|")
-                    cv_id = parts[0].strip()
-                    cv_path = parts[1].strip()
-                    if cv_id and cv_path:
-                        valid_cvs.append((cv_id, cv_path))
-                except IndexError:
-                    continue
-        
-        # 2. If no results found, try other format patterns
-        if not valid_cvs:
-            # Look for patterns like "ID: cv_123, Path: /path/to/file.pdf"
-            import re
-            pattern = r'ID:?\s*([^\s,]+).*?Path:?\s*([^\s,]+)'
-            matches = re.findall(pattern, results_text)
-            valid_cvs.extend(matches)
-        
+        import re
+
+        # Extract candidate name, expected job title, and CV path
+        pattern = r"- Candidate Name:\s*(.*?)\n\s*- Expected Job Title:\s*(.*?)\n\s*- CV File Path:\s*(.*?)\n\s*- Filtering Status:\s*Accepted"
+        matches = re.findall(pattern, raw_text)
+
+        for match in matches:
+            candidate_name, job_title, cv_path = match
+            valid_cvs.append((candidate_name.strip(), job_title.strip(), cv_path.strip()))
+
         return valid_cvs
 
     @crew
@@ -478,40 +428,37 @@ class FindCandidate:
             )
 
             filtering_results = filtering_crew.kickoff(inputs={'job_description': job_description})
-            print("Filtering results:", filtering_results)
+            print("Raw Filtering Results:", filtering_results)
 
-            # Process filtering results
-            if isinstance(filtering_results, CrewOutput):
-                filtering_results_str = str(filtering_results)
-                filtered_cvs = self.parse_filtering_results(filtering_results_str)
-            else:
-                filtered_cvs = self.parse_filtering_results(str(filtering_results))
+            # Extract structured data from CrewOutput
+            filtered_cvs = []
 
-            # Handle case where no CVs are found
+            if isinstance(filtering_results, list) and all(isinstance(task, TaskOutput) for task in filtering_results):
+                # Extract text from each TaskOutput
+                raw_text = "\n".join(task.raw for task in filtering_results if task.raw)
+                print("Extracted Raw Text:", raw_text)
+
+                # Parse the raw text into structured CV data
+                filtered_cvs = self.parse_filtering_results(raw_text)
+
+            # Ensure filtering results are properly formatted
+            if not isinstance(filtered_cvs, list) or not all(isinstance(cv, tuple) for cv in filtered_cvs):
+                print(f"Error: Unexpected filtering results format: {type(filtered_cvs)}")
+                return None
+
+            # If no valid CVs are found, attempt fallback
             if not filtered_cvs:
                 print("No matching CVs found. Checking if any files exist in the directory...")
-                
-                # Fallback: Get all PDF files from the directory if filtering found none
-                all_files = []
-                try:
-                    import glob
-                    pdf_files = glob.glob(os.path.join(self.folder_path, "*.pdf"))
-                    all_files.extend([(f"candidate_{i+1}", path) for i, path in enumerate(pdf_files)])
-                    
-                    # Also try other common CV formats
-                    docx_files = glob.glob(os.path.join(self.folder_path, "*.docx"))
-                    all_files.extend([(f"candidate_{i+len(pdf_files)+1}", path) for i, path in enumerate(docx_files)])
-                except Exception as e:
-                    print(f"Error listing directory: {str(e)}")
-                
-                if all_files:
-                    print(f"Found {len(all_files)} files in directory. Using these as fallback.")
-                    filtered_cvs = all_files
-                else:
-                    print("No files found in directory. Process will continue with empty CV list.")
+
+                # Fallback: Get all available CVs in the directory
+                filtered_cvs = self.get_all_cv_files()
+
+                if not filtered_cvs:
+                    print("No CVs found. Stopping process.")
+                    return None
 
             print(f"Found {len(filtered_cvs)} filtered CVs to process")
-            
+
             # Step 3: Create extraction tasks only for valid CVs
             extraction_tasks = self.create_extraction_tasks(filtered_cvs)
 
@@ -545,7 +492,6 @@ class FindCandidate:
             import traceback
             traceback.print_exc()
             raise
-
 
     # @crew
     # def crew(self, job_description: str) -> Crew:
