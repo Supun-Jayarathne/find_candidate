@@ -72,9 +72,9 @@ class FindCandidate:
     def CVExtractionAgent(self) -> Agent:
         return Agent(
             config=self.agents_config["CVExtractionAgent"],
-            # tools=[self.directory_tool, self.pdf_tool],
+            tools=[self.directory_tool, self.pdf_tool],
             # tools=[self.directory_tool, self.docling_tool],
-            tools=[self.directory_tool],
+            # tools=[self.directory_tool],
             knowledge=self.knowledge_base,
             verbose=True,
             llm=LLM(model="gpt-4o-mini", api_key=os.environ.get("OPENAI_API_KEY"), temperature=0)
@@ -213,8 +213,9 @@ class FindCandidate:
                 
                 # Extract text safely
                 try:
-                    docling_loader = DoclingLoader(file_path=cv_path)
-                    extracted_text = docling_loader.load()
+                    # docling_loader = DoclingLoader(file_path=cv_path)
+                    extracted_text = PDFSearchTool(file_path=cv_path)
+                    # extracted_text = docling_loader.load()
                 except Exception as e:
                     print(f"Error extracting text from {filename}: {e}")
                     print(f"Continuing without extracted text for {cv_id}")

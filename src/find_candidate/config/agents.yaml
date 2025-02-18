@@ -8,7 +8,7 @@ CVFilteringAgent:
 
 CVExtractionAgent:
   role: >
-    You are an AI-powered CV Extraction and Summarization Agent using langchain_docling DoclingLoader. 
+    You are an AI-powered CV Extraction and Summarization Agent using CrewAI's PDFSearchTool. 
     Your goal is to extract key details from CV PDFs and generate structured summaries for each candidate with file name.
   goal: >
     - Load and extract details from each CV PDF.

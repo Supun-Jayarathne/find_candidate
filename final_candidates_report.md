@@ -1,57 +1,69 @@
-# Hiring Report for Associate QA Engineer Position
+# Hiring Report: Top 5 Ranked Candidates
 
 ## Executive Summary
-This report summarizes the top 5 ranked candidates for the Associate QA Engineer position based on their overall match percentages. Each candidate has been evaluated on their strengths, weaknesses, and any skill gaps that may need attention. The findings indicate that while all candidates show potential, there are significant gaps in experience and qualifications that must be addressed before making hiring decisions.
+This report summarizes the top five candidates based on their overall match percentages for the open position. Each candidate has been evaluated on their strengths, weaknesses, and any skill gaps that may need attention. The findings will assist the hiring team in making informed decisions regarding potential hires.
 
 ## Candidate Rankings (Top 5)
 
 | Rank | Candidate Name          | Overall Match Percentage |
-|------|------------------------|--------------------------|
-| 1    | Isuru Aththanayake     | 70%                      |
-| 2    | Buddhi Ekanayake       | 68%                      |
-| 3    | Ashali Samaraweera     | 66%                      |
-| 4    | Harshana Madhuwantha    | 65%                      |
-| 5    | Jehan                  | 64%                      |
+|------|-------------------------|--------------------------|
+| 1    | Ashali Samaraweera      | 75%                      |
+| 2    | Harshana Madhuwantha     | 73%                      |
+| 3    | Jehan Rodrigo            | 70%                      |
+| 4    | Isuru S. Aththanayake    | 68%                      |
+| 5    | Ashan Lakshitha         | 65%                      |
 
 ## Detailed Analysis for Each Candidate
 
-### 1. Isuru Aththanayake
+### 1. Ashali Samaraweera
+- **Overall Match Percentage:** 75%
+- **Strengths:** 
+  - Strong communication skills.
+  - Relevant project experience.
+- **Weaknesses:** 
+  - Lack of detailed educational background.
+  - Missing certifications.
+
+### 2. Harshana Madhuwantha
+- **Overall Match Percentage:** 73%
+- **Strengths:** 
+  - Demonstrated leadership abilities.
+  - Strong teamwork experience.
+- **Weaknesses:** 
+  - Incomplete educational details.
+  - Lack of certifications.
+
+### 3. Jehan Rodrigo
 - **Overall Match Percentage:** 70%
-- **Strengths:** Demonstrated potential in relevant skills; proactive in seeking opportunities.
-- **Weaknesses:** Lack of detailed experience and educational background limits assessment of fit for the role.
+- **Strengths:** 
+  - Good analytical skills.
+  - Relevant internship experience.
+- **Weaknesses:** 
+  - Missing educational qualifications.
+  - Lack of certifications.
 
-### 2. Buddhi Ekanayake
+### 4. Isuru S. Aththanayake
 - **Overall Match Percentage:** 68%
-- **Strengths:** Strong foundational knowledge; good communication skills.
-- **Weaknesses:** Insufficient information on practical experience and qualifications.
+- **Strengths:** 
+  - Strong technical skills.
+  - Excellent problem-solving abilities.
+- **Weaknesses:** 
+  - Lack of comprehensive experience details.
+  - Missing certifications.
 
-### 3. Ashali Samaraweera
-- **Overall Match Percentage:** 66%
-- **Strengths:** Enthusiastic and eager to learn; relevant coursework completed.
-- **Weaknesses:** Missing critical details on work experience and certifications.
-
-### 4. Harshana Madhuwantha
+### 5. Ashan Lakshitha
 - **Overall Match Percentage:** 65%
-- **Strengths:** Good analytical skills; potential for growth in QA.
-- **Weaknesses:** Lack of specific experience and educational qualifications.
-
-### 5. Jehan
-- **Overall Match Percentage:** 64%
-- **Strengths:** Basic understanding of QA principles; adaptable.
-- **Weaknesses:** Incomplete information on qualifications and experience.
-
-## Strengths and Weaknesses
-- **Strengths Across Candidates:**
-  - All candidates exhibit a willingness to learn and show potential in relevant skills.
-  - Communication skills and foundational knowledge are notable strengths in several candidates.
-
-- **Weaknesses Across Candidates:**
-  - A significant number of candidates lack detailed experience, education, and certifications.
-  - Missing information hampers the ability to fully assess their fit for the role.
+- **Strengths:** 
+  - Creative thinker with innovative project ideas.
+- **Weaknesses:** 
+  - Significant gaps in experience.
+  - Incomplete educational background.
 
 ## Final Recommendations
-1. **Further Evaluation:** It is recommended to conduct follow-up interviews with the top candidates to gather more comprehensive information regarding their experience, education, and certifications.
-2. **Skill Development:** Consider providing training opportunities for candidates who show potential but lack specific qualifications.
-3. **Consideration of Additional Candidates:** Given the gaps in the top candidates' profiles, it may be beneficial to widen the search for additional candidates who meet the qualifications more closely.
+- **Ashali Samaraweera** is the top candidate and should be considered for an interview, focusing on clarifying her educational background and certifications.
+- **Harshana Madhuwantha** is also a strong candidate with leadership potential; an interview is recommended to explore his educational qualifications further.
+- **Jehan Rodrigo** shows promise with analytical skills; however, further investigation into his educational background is necessary.
+- **Isuru S. Aththanayake** possesses strong technical skills but needs to address the gaps in experience and certifications before moving forward.
+- **Ashan Lakshitha** may be a creative asset, but the significant gaps in experience and education warrant caution; consider for a junior role or internship if available.
 
-In conclusion, while the top candidates show promise, the hiring team should prioritize gathering more information to make informed hiring decisions.
+This structured approach will help the hiring team make informed decisions based on the candidates' strengths and weaknesses.
